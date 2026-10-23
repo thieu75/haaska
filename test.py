@@ -25,6 +25,16 @@ def test_ha_build_url(home_assistant):
     assert url == "http://localhost:8123/api/test"
 
 
+def test_ssl_client_cert(configuration):
+    configuration.ssl_client = []
+    assert HomeAssistant(configuration).session.cert is None
+    configuration.ssl_client = ["client.crt", "client.key"]
+    assert HomeAssistant(configuration).session.cert == (
+        "client.crt", "client.key")
+    configuration.ssl_client = "client.pem"
+    assert HomeAssistant(configuration).session.cert == "client.pem"
+
+
 def test_get_user_agent(home_assistant):
     os.environ["AWS_DEFAULT_REGION"] = "test"
     user_agent = home_assistant.get_user_agent()

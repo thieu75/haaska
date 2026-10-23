@@ -40,7 +40,11 @@ class HomeAssistant(object):
             'User-Agent': self.get_user_agent()
         }
         self.session.verify = config.ssl_verify
-        self.session.cert = config.ssl_client
+        # requests needs a path or a (cert, key) tuple, not a list
+        if isinstance(config.ssl_client, list):
+            self.session.cert = tuple(config.ssl_client) or None
+        else:
+            self.session.cert = config.ssl_client or None
 
     def build_url(self, endpoint):
         return f'{self.config.url}/api/{endpoint}'
