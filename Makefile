@@ -1,27 +1,23 @@
-
 SHELL := /bin/bash
 
 # Function name in AWS Lambda:
 FUNCTION_NAME=haaska
 
+# Lambda runtime and architecture, dependencies are fetched for this target
+# so the zip works on Lambda whatever the build machine is.
+RUNTIME=python3.13
+PYTHON_VERSION=3.13
+PLATFORM=manylinux2014_x86_64
+
 BUILD_DIR=build
 
-PIPVERSIONEQ9 := $(shell expr `pip3 -V | cut -d ' ' -f 2` \= 9.0.1)
-
-ifneq (,$(wildcard /etc/debian_version))
-	ifeq "$(PIPVERSIONEQ9)" "1"
-		PIP_VER=3
-        	PIP_EXTRA = --system
-	endif
-else
-        PIP_VER =
-	PIP_EXTRA =
-endif
-
-haaska.zip: haaska.py config/*
+haaska.zip: haaska.py config/config.json requirements.txt
+	rm -rf $(BUILD_DIR) $@
 	mkdir -p $(BUILD_DIR)
-	cp $^ $(BUILD_DIR)
-	pip$(PIP_VER) install $(PIP_EXTRA) -t $(BUILD_DIR) requests
+	cp haaska.py config/config.json $(BUILD_DIR)
+	pip3 install -t $(BUILD_DIR) -r requirements.txt \
+		--platform $(PLATFORM) --python-version $(PYTHON_VERSION) \
+		--implementation cp --only-binary=:all:
 	chmod 755 $(BUILD_DIR)/haaska.py
 	cd $(BUILD_DIR); zip ../$@ -r *
 
@@ -29,7 +25,9 @@ haaska.zip: haaska.py config/*
 deploy: haaska.zip
 	aws lambda update-function-configuration \
 		--function-name $(FUNCTION_NAME) \
+		--runtime $(RUNTIME) \
 		--handler haaska.event_handler
+	aws lambda wait function-updated --function-name $(FUNCTION_NAME)
 	aws lambda update-function-code \
 		--function-name $(FUNCTION_NAME) \
 		--zip-file fileb://$<
@@ -56,20 +54,15 @@ DISCOVERY_PAYLOAD:='                                \
 discover:
 	@aws lambda invoke \
 		--function-name $(FUNCTION_NAME) \
+		--cli-binary-format raw-in-base64-out \
 		--payload ${DISCOVERY_PAYLOAD} \
 		/dev/fd/3 3>&1 >/dev/null | jq '.'
 
+.PHONY: test
+test:
+	python3 -m pytest test.py
+	flake8 haaska.py test.py
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR) haaska.zip
-
-.PHONY: sample_config
-sample_config:
-	python -c 'from haaska import Configuration; print(Configuration().dump())' > config/config.json.sample
-
-.PHONY: modernize_config
-modernize_config: config/config.json
-	@python -c 'from haaska import Configuration; print(Configuration("config/config.json").dump())' > config/config.json.modernized
-	@echo Generated config/config.json.modernized from your existing config/config.json
-	@echo Inspect that file and replace config/config.json with it to update your configuration

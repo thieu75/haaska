@@ -1,5 +1,16 @@
 # haaska Changelog
 
+## [Unreleased]
+### Changed
+- Bump requests to 2.34.2, pytest to 9.1.1 and flake8 to 7.4.1.
+- Target the `python3.13` Lambda runtime; `make deploy` now sets it.
+- The zip is built from `requirements.txt` with Linux wheels, so it can be
+  built from macOS, and no longer reuses a stale `haaska.zip`.
+- CI runs on Python 3.10 to 3.14 with current GitHub Actions and CodeQL v3.
+
+### Removed
+- Broken `sample_config` and `modernize_config` Makefile targets.
+
 ## [0.5] - 2018-09-18
 ###
 - Breaking Change: Remove support for the legacy_auth provider in homeassistant

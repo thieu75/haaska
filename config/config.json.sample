@@ -1,5 +1,5 @@
 {
-  "url": "http://localhost:8123/api",
+  "url": "http://localhost:8123",
   "bearer_token": "",
   "debug": false,
   "ssl_verify": true,

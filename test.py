@@ -28,7 +28,8 @@ def test_ha_build_url(home_assistant):
 def test_get_user_agent(home_assistant):
     os.environ["AWS_DEFAULT_REGION"] = "test"
     user_agent = home_assistant.get_user_agent()
-    assert user_agent.startswith("Home Assistant Alexa Smart Home Skill - test - python-requests/")
+    assert user_agent.startswith(
+        "Home Assistant Alexa Smart Home Skill - test - python-requests/")
 
 
 def test_config_get(configuration):
