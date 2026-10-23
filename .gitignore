@@ -103,3 +103,6 @@ build
 haaska.zip
 /.vs
 /.idea/
+
+# Local config with secrets and locally installed dependencies
+/config.json
